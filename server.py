@@ -1,34 +1,14 @@
-import socket
+#!/usr/bin/env python
 
-# Create a TCP/IP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+import asyncio
+from websockets.server import serve
 
-# Bind the socket to the address and port
-server_address = ('0.0.0.0', 8888)
-print('Starting up on {} port {}'.format(*server_address))
-server_socket.bind(server_address)
+async def echo(websocket):
+    async for message in websocket:
+        await websocket.send(message)
 
-# Listen for incoming connections
-server_socket.listen(1)
+async def main():
+    async with serve(echo, "localhost", 8765):
+        await asyncio.Future()  # run forever
 
-while True:
-    # Wait for a connection
-    print('Waiting for a connection...')
-    connection, client_address = server_socket.accept()
-
-    try:
-        print('Connection from', client_address)
-
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(1024)
-            if data:
-                print('Received:', data.decode())
-                connection.sendall(b'Echo: ' + data)
-            else:
-                print('No more data from', client_address)
-                break
-
-    finally:
-        # Clean up the connection
-        connection.close()
+asyncio.run(main())
